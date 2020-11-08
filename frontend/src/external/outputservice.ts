@@ -29,10 +29,9 @@ const printResultsToConsole = (portsData: Array<Port>, vesselsData: Array<Vessel
   console.log('///////////////////////////////// PORTS ////////////////////////////////')
   console.log('////////////////////////////////////////////////////////////////////////')
   console.log('')
-  const portPercMarks = ['5','20','50','75','90']
   portsData.forEach(p => {
     console.log(`Port: ${p.name} (${p.id}). Visits: ${p.totalVisits}`)
-    console.log(`Duration Percentiles:`, p.percentiles.map((d, i) => `${portPercMarks[i]}%: ${toHours(d).toFixed(2)} hours`))
+    console.log(`Duration Percentiles:`, p.percentiles.map(d => `${toHours(d).toFixed(2)} hours`))
     console.log(`------------------------------------------------------------------------`)
   })
 
@@ -42,16 +41,20 @@ const printResultsToConsole = (portsData: Array<Port>, vesselsData: Array<Vessel
   console.log('//////////////////////////////// VESSELS ///////////////////////////////')
   console.log('////////////////////////////////////////////////////////////////////////')
   console.log('')
-  const vesselPercMarks = ['5','50','90']
   vesselsData.forEach(v => {
     console.log(`Vessel: ${v.name} (${v.imo})`)
-    console.log(`2Day delays Percentiles:`, v.percentiles2Day.map((d, i) => `${vesselPercMarks[i]}%: ${toHours(d).toFixed(2)} hours`))
-    console.log(`7Day delays Percentiles:`, v.percentiles7Day.map((d, i) => `${vesselPercMarks[i]}%: ${toHours(d).toFixed(2)} hours`))
-    console.log(`14Day delays Percentiles:`, v.percentiles14Day.map((d, i) => `${vesselPercMarks[i]}%: ${toHours(d).toFixed(2)} hours`))
+    console.log(`2Day delays Percentiles:`, v.percentiles2Day.map(d => `${toHours(d).toFixed(2)} hours`))
+    console.log(`7Day delays Percentiles:`, v.percentiles7Day.map(d => `${toHours(d).toFixed(2)} hours`))
+    console.log(`14Day delays Percentiles:`, v.percentiles14Day.map(d => `${toHours(d).toFixed(2)} hours`))
     console.log(`------------------------------------------------------------------------`)
   })
 }
 
+const toHtml = (portsData: Array<Port>, vesselsData: Array<Vessel>) => {
+
+}
+
 export {
   printResultsToConsole,
+  toHtml,
 }

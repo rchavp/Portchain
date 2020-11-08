@@ -17,7 +17,13 @@ Execute the image (this will run the project immediately, print the results on s
 ```
 docker run --name portchainins -it --rm portchain
 ```
-**Bonus**: You can run the image but just drop into a shell:
+**Bonus**: Execute the image as a web site:
+```
+docker run --name pcinstance -it --rm -e RUNAS='WEB' -p 9876:9876 portchain
+# then navigate to http://localhost:9876/
+# **NOTE**: I didn't have time to make the results look pretty on web (and css, ux is not my forte)
+```
+**Bonus2**: You can run the image but just drop into a shell:
 ```
 docker run --name portchainins -it --rm portchain /bin/bash  # then 'cd /deploy' and from there any node commands.
 ```
@@ -51,7 +57,7 @@ Notes:
 
 #### Execution Approach
 I decided to apply an iterative process where I will try to achieve something viable as quick as possible and then refactor on each iteration.
-1. First I laid down a solution that will just work, but making sure that it is based at least on a minimum set of principles I've learned over the years.
+1. First I laid down a solution that will just work, but making sure that it is based at least on a minimum set of principles I've learned over the years (the result of this first iteration can be seen in the file **src/simple.ts**).
     * Focus on logic first before performance (unless otherwise specified).
     * Favor declarative statements over imperative ones.
     * Make functions as pure as possible at first.
@@ -59,7 +65,7 @@ I decided to apply an iterative process where I will try to achieve something vi
     * Do not focus on generalizations at first. Only when I need to repeat code more that 2 times I will later consider refactoring it.
     * Make the code readable even if it's not that perfect yet.
     * Make sure to use clear types as much as possible from the get go.
-    * Capture exceptions only from the main scope and make the rest of exceptions are raised at least. We just need to know if something broke, nothing more.
+    * Capture exceptions only from the main scope and make sure the rest of exceptions are raised at least. We just need to know if something broke, nothing more.
 2. Then I iterated over the first solution focusing on:
     * Separate functions and types into their own modules. Not only because of tidyness but also to hide any local scope setup that belongs only to those modules (for example utility functions and closure scoped variables that need not be exposed in the main scope)
     * Look for any imperative declaration that could be refactored into a declarative one (for ex try to use reduce, map, filter and other applicative constructs instead of plain for, while, or even functions that will end up being analogous).
@@ -68,10 +74,12 @@ I decided to apply an iterative process where I will try to achieve something vi
     * Once functions are more atomic, make sure they are covered by unit tests.
     * Identify the domains and bottom conditions of the pure functions and add a unit tests accordingly (if possible).
     * Enhance exception handling to be comprehensive and to fit within the logic flow, logging, healthchecks, etc.
-3. Finally, I ran the tests and the whole project. Only after that then I focused on performance improvements. If there is an obvious performance issue I will address it here. In this particular test I didn't do much as I didn't feel the performance was bad at all. However, for a real life project, I **will definitely** consider all external systems that would be linked to this, as well as running environments, runtimes, etc. Only then, and coupled with sensible guidelines (peferably benchmarks or any empiric metrics) I will then consider refactoring the code to accomodate for performance. Refactoring good and readable code for performance is a noble task that can also backfire. And this may not be avoidable. However I consider it as having a tendency to create technical debt as well as increasing the maintenance load, so I'm mindful about it.
+3. Finally, I ran the tests and the whole project. Only after that then I focused on performance improvements. If there is an obvious performance issue I will address it here:
+    * Performancewise the only bottleneck that I decided to fix was the concurrency of the api calls. Not all of them have to run sequencially, in fact, each api call per vessel can run independently from each other asynchronously. For this purpose I used a simple Promise.all to trigger all api calls at once and then waited for all of them to be resolved. A potential problem arises whereby now we may have too many api calls at the same time. We can remediate this by using a library to pool the amount of promises that can run at any given time, hence making sure we have a sensible number. However I didn't have time to properly hook up this.
+For this particular test I didn't do much more as I didn't feel the performance was bad at all. However, for a real life project, I **will definitely** consider all external systems that would be linked to this, as well as running environments, runtimes, etc. Only then, and coupled with sensible guidelines (peferably benchmarks or any empiric metrics) I will then consider refactoring the code to accomodate for performance. Refactoring good and readable code for performance is a noble task that can also backfire. And this may not be avoidable. However I consider it as having a tendency to create technical debt as well as increasing the maintenance load, so I'm mindful about it.
 
 ---
 
 **Final note**: *I made my best to adhere by the goals and constraints of the test as it was described. However, I need to point out that unlike some project that I will do in real life, the challenge presented here may have a slighly different tint to my usual work.  
-What I mean by this is that in this exercise the* **journey** *is as important as the* **goal**, *because this is a showcase of not only me achieving a goal that would make me proud based on requirements, along with normal side tasks like simple docs and such. For this test I* **also** *needed to make sure to leave breadcrumbs and empirical evidence that under notmal circumstances I would not consider adding in as they may be overkill or too academic (for example the length and the nature of this entire README).  
+What I mean by this is that in this exercise the* **journey** *is as important as the* **goal**, *because this is a showcase of not only me achieving a goal that would make me proud based on requirements, along with normal side tasks like simple docs and such. For this test I* **also** *needed to make sure to leave breadcrumbs and empirical evidence that under normal circumstances I would not consider adding in as they may be overkill or too academic (for example the length and the nature of this entire README).  
 In short, some of the things I did (and even some I didn't) were meant to help you assess my test, but these decisions may have been a bit different if this had been a real life problem with a very well defined surrounding context.*

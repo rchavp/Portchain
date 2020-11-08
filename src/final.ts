@@ -1,8 +1,7 @@
-import { ProcessedCall, } from './types'
-import { curry, compose, getVessels, getPortCalls, toHours, processPortCalls } from './funcs'
-import { VesselApiError, PortCallApiError } from './customErrors' 
-import { getAllProcessedPortCalls, getProcessedPorts } from './portservice'
-import { getProcessedVessels } from './vesselservice'
+import express from 'express'
+import { Express, Request, Response } from "express"
+import * as path from "path"
+import { getAggregates } from './aggregateService'
 import { printResultsToConsole } from './outputservice'
 
 console.log('Starting app ...')
@@ -10,46 +9,47 @@ console.log('Starting app ...')
 ///////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////
 
-const main = async () => {
-  try {
-    // Get dataset for vessels
-    const vessels = await getVessels()
+const runAsCommandLine = async () => {
+  const { portsFullProcessedData, vesselsFullProcessedData } = await getAggregates()
 
-    // Get dataset of all PortCalls based on the list of vessels
-    const allPortCalls = await getAllProcessedPortCalls(vessels)
-
-    // Transform (process) all portcalls to enhace them with the data for 2,7,14 days delays and durations
-    const processedCalls: Array<ProcessedCall> = processPortCalls(allPortCalls)
-
-    // Get a full list of Ports with all processed information
-    const portsFullProcessedData = getProcessedPorts(processedCalls)
-
-    // Get a full list of Vessels with all processed information
-    const vesselsFullProcessedData = getProcessedVessels(processedCalls)
-
-    // Print the results
-    printResultsToConsole(portsFullProcessedData, vesselsFullProcessedData)
-  } catch(ex) {
-    if (ex instanceof VesselApiError) {
-      console.error('Error while calling the Vessel Api', ex)
-      return -1
-    } else if (ex instanceof PortCallApiError) {
-      console.error('Error while calling the PortCall Api', ex)
-      return -1
-    }
-  }
+  if (!portsFullProcessedData || !vesselsFullProcessedData)
+    return -1
+   
+  // Print the results
+  printResultsToConsole(portsFullProcessedData, vesselsFullProcessedData)
   return 0
 }
 
+const runAsWebste = () => {
+  console.log('Instructed to run as website\n')
+  const app: Express = express();
+  const port = process.env.PORT || 9876;
 
-main()
-  .then((exitCode: number) => {
-    console.log('--------------------------------------------------')
-    console.log('--------------------------------------------------')
-    if (exitCode === -1)
-      console.error(`Process ended with code ${exitCode}`)
-    else
-      console.log('Process ended successfully')
+  app.use(express.static(path.resolve("./") + "/dist/frontend"));
+
+  app.get("*", (req: Request, res: Response): void => {
+    res.sendFile(path.resolve("./") + "/dist/frontend/index.html")
   })
 
+  app.listen(port, function() {
+    console.log(`Listening on port ${port}`)
+  })
+}
+
+// For the purposes of this code challenge here is a simple way to
+// showcase the test being ran vi command line or web
+if (process.env.RUNAS && process.env.RUNAS === 'WEB')
+{
+  runAsWebste()
+} else {
+  runAsCommandLine()
+    .then((exitCode: number) => {
+      console.log('--------------------------------------------------')
+      console.log('--------------------------------------------------')
+      if (exitCode === -1)
+        console.error(`Process ended with code ${exitCode}`)
+      else
+        console.log('Process ended successfully')
+    })
+}
 
